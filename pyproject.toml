@@ -1,0 +1,27 @@
+[project]
+name = "arctrl-paper-snippets"
+version = "0.0.1"
+description = ""
+authors = [
+    { name = "Heinrich Lukas Weil", email = "weil@rptu.de" },
+    { name = "Kevin Frey", email = "freymaurer@gmx.de" },
+    { name = "Kevin Schneider", email = "schneike@rptu.de" },
+]
+requires-python = ">=3.12"
+readme = "README.md"
+keywords = [
+    "arc",
+    "annotated research context",
+    "isa",
+    "research data",
+    "multi platform",
+]
+dependencies = [
+    "arctrl>=3.2.3, <4.0.0"
+]
+
+[project.urls]
+Repository = "https://github.com/nfdi4plants/ARCtrl"
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,23 @@
+{
+  "name": "actrl_paper_snippets",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/HLWeil/ARCtrl_Paper_Snippets#readme",
+  "bugs": {
+    "url": "https://github.com/HLWeil/ARCtrl_Paper_Snippets/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HLWeil/ARCtrl_Paper_Snippets.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@nfdi4plants/arctrl": "^3.2.3"
+  }
+}
