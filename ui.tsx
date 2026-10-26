@@ -1,4 +1,5 @@
 import { JsonController, ARC, ArcAssay, OntologyAnnotation } from "@nfdi4plants/arctrl";
+import { Stack, Heading, Text } from "@primer/react";
 
 /**
 

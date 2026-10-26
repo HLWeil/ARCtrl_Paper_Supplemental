@@ -18,6 +18,12 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@nfdi4plants/arctrl": "^3.2.3"
+    "@nfdi4plants/arctrl": "^3.2.3",
+    "@primer/react": "^38.43.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "react": "^19.3.1",
+    "typescript": "^7.0.2"
   }
 }
