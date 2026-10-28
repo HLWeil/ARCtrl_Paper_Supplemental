@@ -17,7 +17,8 @@ keywords = [
     "multi platform",
 ]
 dependencies = [
-    "arctrl>=3.2.3, <4.0.0"
+    "arctrl>=3.2.3, <4.0.0",
+    "google-cloud-bigquery==3.46.2"
 ]
 
 [project.urls]
