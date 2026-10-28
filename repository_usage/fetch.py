@@ -8,7 +8,8 @@ Sources:
 - NuGet: nugettrends.com weekly cumulative totals (nuget.org itself has no history)
 - PyPI:  Google BigQuery public dataset `bigquery-public-data.pypi.file_downloads`,
          either queried directly (needs `google-cloud-bigquery` and a GCP project)
-         or read from a CSV exported from the BigQuery console (columns: day, downloads)
+         or read from a CSV exported from the BigQuery console
+         (columns: day, downloads, downloads_no_mirrors)
 
 Usage:
     python repository_usage/fetch.py --gcp-project my-project
@@ -32,10 +33,18 @@ NPM_START = date(2023, 9, 1)
 PYPI_START = date(2024, 3, 1)
 
 DATA_DIR = Path(__file__).parent / "data"
-FIELDS = ["date", "registry", "package", "downloads", "cumulative"]
+# The *_no_mirrors columns are only filled for PyPI.
+FIELDS = ["date", "registry", "package", "downloads", "cumulative", "downloads_no_mirrors", "cumulative_no_mirrors"]
+
+# Installers counted as mirrors, same definition as pypistats.org.
+# Like pypistats, downloads without an installer name (mostly bots) are excluded as well.
+PYPI_MIRRORS = ["bandersnatch", "z3c.pypimirror", "Artifactory", "devpi"]
 
 PYPI_QUERY = """
-SELECT DATE(timestamp) AS day, COUNT(*) AS downloads
+SELECT
+  DATE(timestamp) AS day,
+  COUNT(*) AS downloads,
+  COUNTIF(details.installer.name IS NOT NULL AND details.installer.name NOT IN UNNEST(@mirrors)) AS downloads_no_mirrors
 FROM `bigquery-public-data.pypi.file_downloads`
 WHERE file.project = @package
   AND DATE(timestamp) BETWEEN @start AND @end
@@ -63,6 +72,17 @@ def to_rows(registry: str, package: str, daily: list[tuple[date, int]]) -> list[
             "downloads": downloads,
             "cumulative": total,
         })
+    return rows
+
+
+def to_pypi_rows(daily: list[tuple[date, int, int]]) -> list[dict]:
+    """Like to_rows, with an additional running total of non-mirror downloads."""
+    rows = to_rows("pypi", PYPI_PACKAGE, [(day, downloads) for day, downloads, _ in daily])
+    total = 0
+    for row, (_, _, no_mirrors) in zip(rows, sorted(daily)):
+        total += no_mirrors
+        row["downloads_no_mirrors"] = no_mirrors
+        row["cumulative_no_mirrors"] = total
     return rows
 
 
@@ -106,15 +126,19 @@ def fetch_pypi_bigquery(project: str, end: date) -> list[dict]:
         bigquery.ScalarQueryParameter("package", "STRING", PYPI_PACKAGE),
         bigquery.ScalarQueryParameter("start", "DATE", PYPI_START),
         bigquery.ScalarQueryParameter("end", "DATE", end),
+        bigquery.ArrayQueryParameter("mirrors", "STRING", PYPI_MIRRORS),
     ])
     result = client.query(PYPI_QUERY, job_config=config).result()
-    return to_rows("pypi", PYPI_PACKAGE, [(row.day, row.downloads) for row in result])
+    return to_pypi_rows([(row.day, row.downloads, row.downloads_no_mirrors) for row in result])
 
 
 def read_pypi_csv(path: Path) -> list[dict]:
     with path.open(newline="") as file:
-        daily = [(date.fromisoformat(row["day"]), int(row["downloads"])) for row in csv.DictReader(file)]
-    return to_rows("pypi", PYPI_PACKAGE, daily)
+        daily = [
+            (date.fromisoformat(row["day"]), int(row["downloads"]), int(row["downloads_no_mirrors"]))
+            for row in csv.DictReader(file)
+        ]
+    return to_pypi_rows(daily)
 
 
 def write_csv(path: Path, rows: list[dict]) -> None:
@@ -129,7 +153,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pypi = parser.add_mutually_exclusive_group()
     pypi.add_argument("--gcp-project", help="GCP project used to query the PyPI BigQuery dataset")
-    pypi.add_argument("--pypi-csv", type=Path, help="CSV exported from BigQuery with columns day, downloads")
+    pypi.add_argument("--pypi-csv", type=Path, help="CSV exported from BigQuery with columns day, downloads, downloads_no_mirrors")
     args = parser.parse_args()
 
     # Stop two days back, npm and BigQuery lag up to a day behind and would report zeros.
