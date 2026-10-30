@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
-import { ArcWebViewer } from "./ui_2";
+import { ArcWebViewer } from "./ui";
 
 // Renders ui_2.tsx to a static HTML page, styled like the Swate metadata pages (light theme).
 // Usage: npm run render -- <ro-crate.json> [query] [out.html]
